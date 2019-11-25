@@ -1,23 +1,22 @@
 import './app1.css'
 import $ from 'jquery'
+import Model from './base/Model.js'
+
 
 const eventBus = $(window)
 // 数据相关都放到m
-const m = {
+const m = new Model({
   data: {
     n: parseInt(localStorage.getItem('n'))
   },
-  create() {},
-  delete() {},
-  update(data) {
+  update: function (data) {
     Object.assign(m.data, data)
     eventBus.trigger('m:updated')
     localStorage.setItem('n', m.data.n)
-  },
-  get() {}
-}
-// 视图相关都放到v
-const v = {
+  }
+})
+// 其他都c
+const view = {
   el: null,
   html: `
   <div>
@@ -33,24 +32,18 @@ const v = {
   </div>
 `,
   init(container) {
-    v.el = $(container)
-  },
-  render(n) {
-    if (v.el.children.length !== 0) v.el.empty()
-    $(v.html.replace('{{n}}', n))
-      .appendTo(v.el)
-  }
-}
-// 其他都c
-const c = {
-  init(container) {
-    v.init(container)
-    v.render(m.data.n) // view = render(data)
-    c.autoBindEvents()
+    view.el = $(container)
+    view.render(m.data.n) // view = render(data)
+    view.autoBindEvents()
     eventBus.on('m:updated', () => {
       console.log('here')
-      v.render(m.data.n)
+      view.render(m.data.n)
     })
+  },
+  render(n) {
+    if (view.el.children.length !== 0) view.el.empty()
+    $(view.html.replace('{{n}}', n))
+      .appendTo(view.el)
   },
   events: {
     'click #add1': 'add',
@@ -71,15 +64,15 @@ const c = {
     m.update({n: m.data.n / 2})
   },
   autoBindEvents() {
-    for (let key in c.events) {
-      const value = c[c.events[key]]
+    for (let key in view.events) {
+      const value = view[view.events[key]]
       const spaceIndex = key.indexOf(' ')
       const part1 = key.slice(0, spaceIndex)
       const part2 = key.slice(spaceIndex + 1)
-      v.el.on(part1, part2, value)
+      view.el.on(part1, part2, value)
     }
   }
 }
 
-export default c
+export default view
 
